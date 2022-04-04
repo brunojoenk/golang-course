@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/brunojoenk/html"
+	"io/ioutil"
+	"net/http"
+	"regexp"
 )
 
 func encaminhar(origem <-chan string, destino chan string) {
@@ -23,9 +24,23 @@ func juntar(entrada1, entrada2 <-chan string) <-chan string {
 
 func main() {
 	c := juntar(
-		html.Titulo("https://www.cod3r.com.br", "https://www.google.com"),
-		html.Titulo("https://www.amazon.com", "https://www.youtube.com"),
+		titulo("https://www.cod3r.com.br", "https://www.google.com"),
+		titulo("https://www.amazon.com", "https://www.youtube.com"),
 	)
 	fmt.Println(<-c, "|", <-c)
 	fmt.Println(<-c, "|", <-c)
+}
+
+func titulo(urls ...string) <-chan string {
+	c := make(chan string)
+	for _, url := range urls { //ignorando o indice _
+		go func(url string) {
+			resp, _ := http.Get(url)
+			html, _ := ioutil.ReadAll(resp.Body)
+
+			r, _ := regexp.Compile("<title>(.*?)<\\/title>")
+			c <- r.FindStringSubmatch(string(html))[1]
+		}(url)
+	}
+	return c
 }

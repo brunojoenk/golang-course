@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"regexp"
 	"time"
-
-	"github.com/brunojoenk/html"
 )
 
 func oMaisRapido(url1, url2, url3 string) string {
-	c1 := html.Titulo(url1)
-	c2 := html.Titulo(url2)
-	c3 := html.Titulo(url3)
+	c1 := titulo(url1)
+	c2 := titulo(url2)
+	c3 := titulo(url3)
 
 	//estrutura de controle específica para concorrência
 	select {
@@ -34,4 +35,18 @@ func main() {
 		"https://www.google.com",
 	)
 	fmt.Println(campeao)
+}
+
+func titulo(urls ...string) <-chan string {
+	c := make(chan string)
+	for _, url := range urls { //ignorando o indice _
+		go func(url string) {
+			resp, _ := http.Get(url)
+			html, _ := ioutil.ReadAll(resp.Body)
+
+			r, _ := regexp.Compile("<title>(.*?)<\\/title>")
+			c <- r.FindStringSubmatch(string(html))[1]
+		}(url)
+	}
+	return c
 }
