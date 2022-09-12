@@ -12,7 +12,6 @@ func horaCerta(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>Hora certa: %s</h1>", s)
 }
 
-//Testing
 func main() {
 	http.HandleFunc("/horaCerta", horaCerta)
 	log.Println("Executando")
